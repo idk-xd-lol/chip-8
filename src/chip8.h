@@ -6,6 +6,12 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <string.h>
+#include <time.h>
+#include <SDL3/SDL.h>
+#include <SDL3/SDL_init.h>
+#include <SDL3/SDL_video.h>
+#include <SDL3/SDL_stdinc.h>
+#include <SDL3/SDL_timer.h>
 
 typedef struct {
   uint8_t memory[0x1000];
@@ -26,5 +32,9 @@ typedef struct {
 uint16_t read_opcode(Chip8 *chip);
 void exec_opcode(Chip8 *chip, int opcode);
 void fileopen(char *filename, Chip8 *chip);
+void unknown_opcode(int opcode);
+void execute_cpu_cycle(Chip8 *chip);
+void window_create();
+void window_destroy();
 
 #endif // !i

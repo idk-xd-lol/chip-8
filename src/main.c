@@ -1,8 +1,5 @@
 #include "chip8.h"
-#include <stdint.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
+#include <SDL3/SDL_events.h>
 
 unsigned char font[0x50] = 
 {
@@ -34,20 +31,49 @@ int main(int argc, char **argv)
     exit(EXIT_FAILURE);
   }
 
-  //varibles
   Chip8 chip = {0};
   chip.pc = 0x200;
-  char *filename = argv[1];
-  fileopen(filename, &chip);
+  bool running = true;
 
-  memcpy(&chip.memory[0x50], font, sizeof(font));
+  SDL_Init(SDL_INIT_VIDEO);
+  SDL_Window *window = SDL_CreateWindow("CHIP-8", 640, 320, 0);
+  SDL_Renderer *renderer = SDL_CreateRenderer(window, NULL);
+  SDL_Event event;
 
-  while(1)
+  fileopen(argv[1], &chip); //open file
+  memcpy(&chip.memory[0x50], font, sizeof(font)); //load font
+  srand(time(NULL));
+
+  //screen 
+  Uint16 last_timer = SDL_GetTicks();
+
+  while(running)
   {
-    uint16_t opcode = read_opcode(&chip);
-    chip.pc += 2;
-    exec_opcode(&chip, opcode);
+    while (SDL_PollEvent(&event)) {
+      if(event.type == SDL_EVENT_QUIT)
+        running = false;
+    }
+
+    SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
+    SDL_RenderClear(renderer);
+    SDL_RenderPresent(renderer);
+
+    execute_cpu_cycle(&chip);
+    Uint16 now = SDL_GetTicks();
+    if(now - last_timer >= 1000 / 60)
+    {
+      if(chip.delay_timer > 0)
+        chip.delay_timer--;
+      if (chip.sound_timer > 0)
+        chip.sound_timer--;
+
+      last_timer = now;
+    }
   }
+
+  SDL_DestroyRenderer(renderer);
+  SDL_DestroyWindow(window);
+  SDL_Quit();
 
   return 0;
 }

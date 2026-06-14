@@ -1,4 +1,5 @@
 #include "chip8.h"
+#include <stdlib.h>
 
 uint16_t read_opcode(Chip8 * chip)
 {
@@ -107,9 +108,11 @@ void exec_opcode(Chip8* chip, int opcode)
       chip->pc = chip->V[0x0] + nnn;
       break;
     case 0xC000:
-      //VX = NN & rand_num
+      chip->V[x] = nnn & (rand() % 0xFF);
+      break;
     case 0xD000:
       //draw sprite
+      break;
     case 0xE000:
       switch (nn)
       {
@@ -128,16 +131,18 @@ void exec_opcode(Chip8* chip, int opcode)
       switch (nn)
       {
         case 0x07:
-          //sets VX to the value of the delay delay timer 
+          chip->V[x] = chip->delay_timer;
           break;
         case 0x0A:
           //a key press is awaited and then stored in VX
           break;
         case 0x15:
           //sets the delay timer to VX
+          chip->delay_timer = chip->V[x];
           break;
         case 0x18:
           //sets the sound timer to VX 
+          chip->sound_timer = chip->V[x];
           break;
         case 0x1E:
           chip-> I += chip->V[x];
@@ -191,3 +196,17 @@ void fileopen(char *filename, Chip8 *chip)
   }
   fclose(fp);
 }
+
+void execute_cpu_cycle(Chip8 *chip)
+{
+  uint16_t opcode = read_opcode(chip);
+  chip->pc += 2;
+  exec_opcode(chip, opcode);
+}
+
+void unknown_opcode(int opcode)
+{
+  printf("error, unknown opcode: 0x%x", opcode);
+  exit(EXIT_FAILURE);
+}
+
