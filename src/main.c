@@ -2,6 +2,7 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 unsigned char font[0x50] = 
 {
@@ -23,46 +24,30 @@ unsigned char font[0x50] =
   0xF0, 0x80, 0xF0, 0x80, 0x80  // F
 };
 
-typedef struct {
-  uint8_t memory[0x1000];
-  
-  uint8_t V[0x10];
-
-  uint16_t I;
-  uint16_t pc;
-
-  uint16_t stack;
-  uint8_t sp;
-
-  uint8_t delay_timer;
-  uint8_t sound_timer;
-
-} Chip8;
-
 
 int main(int argc, char **argv)
 {
+  //check argument count
   if (argc != 2)
   {
     printf("USAGE: ./chip8 <path_to_file>\n");
     exit(EXIT_FAILURE);
   }
 
-  Chip8 chip;
+  //varibles
+  Chip8 chip = {0};
   chip.pc = 0x200;
+  char *filename = argv[1];
+  fileopen(filename, &chip);
 
-  for (int i = 0; i < 80; i++)
-    chip.memory[i] = font[i];
+  memcpy(&chip.memory[0x50], font, sizeof(font));
 
-  int c;
-  FILE *fp = fopen(argv[1], "rb");
-  for (int i = chip.pc; (c = fgetc(fp)) != EOF; i++)
+  while(1)
   {
-    chip.memory[i] = c;
+    uint16_t opcode = read_opcode(&chip);
+    chip.pc += 2;
+    exec_opcode(&chip, opcode);
   }
 
-  for (int i = 0; i < 4096; i++)
-    printf("%c ", chip.memory[i]);
-  printf("\n");
   return 0;
 }
