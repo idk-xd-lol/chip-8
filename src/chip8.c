@@ -23,11 +23,10 @@ void exec_opcode(Chip8* chip, int opcode)
           //clears screen
           break;
         case 0xEE:
-          //return from a subroutine
           chip->pc = chip->stack[--chip->sp];
           break;
         default:
-          //unknown opcode
+          unknown_opcode(opcode);
           break;
       }
       break;
@@ -93,7 +92,7 @@ void exec_opcode(Chip8* chip, int opcode)
           chip->V[x] <<= 1;
           break;
         default:
-          //unknown opcode
+          unknown_opcode(opcode);
           break;
       }
       break;
@@ -123,7 +122,7 @@ void exec_opcode(Chip8* chip, int opcode)
           //pc+=2 if key in VX isn't pressed
           break;
         default:
-          //unknown opcode
+          unknown_opcode(opcode);
           break;
       }
       break;
@@ -160,12 +159,12 @@ void exec_opcode(Chip8* chip, int opcode)
           //fills from V0 to VX with values from memory starting at address I.
           break;
         default:
-          //unknown opcode
+          unknown_opcode(opcode);
           break;
         break;
       }
     default:
-      //unknown option
+      unknown_opcode(opcode);
       break;
   }
   printf("0x%X\n", opcode);

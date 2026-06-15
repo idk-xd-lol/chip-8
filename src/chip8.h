@@ -27,6 +27,8 @@ typedef struct {
   uint8_t delay_timer;
   uint8_t sound_timer;
 
+  uint8_t display[32][64];
+
 } Chip8;
 
 uint16_t read_opcode(Chip8 *chip);
@@ -34,7 +36,5 @@ void exec_opcode(Chip8 *chip, int opcode);
 void fileopen(char *filename, Chip8 *chip);
 void unknown_opcode(int opcode);
 void execute_cpu_cycle(Chip8 *chip);
-void window_create();
-void window_destroy();
 
 #endif // !i
