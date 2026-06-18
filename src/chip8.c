@@ -1,5 +1,8 @@
 #include "chip8.h"
+#include <SDL3/SDL_events.h>
+#include <SDL3/SDL_render.h>
 #include <stdlib.h>
+
 
 uint16_t read_opcode(Chip8 * chip)
 {
@@ -209,3 +212,17 @@ void unknown_opcode(int opcode)
   exit(EXIT_FAILURE);
 }
 
+void event_loop(SDL_Event *event, bool *running)
+{
+  while (SDL_PollEvent(event)) {
+      if(event->type == SDL_EVENT_QUIT)
+        running = false;
+    }
+}
+
+void render_draw(SDL_Renderer *renderer)
+{
+  SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
+  SDL_RenderClear(renderer);
+  SDL_RenderPresent(renderer);
+}
