@@ -9,7 +9,6 @@ int main(int argc, char **argv)
     exit(EXIT_FAILURE);
   }
 
-  bool keys[16] = {0};
   Chip8 chip = {0};
   chip.pc = 0x200;
   bool running = true;
@@ -28,8 +27,9 @@ int main(int argc, char **argv)
 
   while(running)
   {
-    event_loop(&event, &running);
+    event_loop(&chip, &event, &running);
     execute_cpu_cycle(&chip);
+    render_draw(renderer);
     Uint16 now = SDL_GetTicks();
     if(now - last_timer >= 1000 / 60)
     {

@@ -2,9 +2,12 @@
 #define CHIP8_H
 
 #include <SDL3/SDL_events.h>
+#include <SDL3/SDL_keycode.h>
+#include <stdint.h>
 #include <stdlib.h>
 #include <stdint.h>
 #include <stdio.h>
+#include <sys/types.h>
 #include <unistd.h>
 #include <string.h>
 #include <time.h>
@@ -30,7 +33,10 @@ typedef struct {
   uint8_t delay_timer;
   uint8_t sound_timer;
 
-  uint8_t display[32][64];
+  bool display[32][64];
+
+  bool waiting_for_key;
+  uint8_t waiting_register;
 
 } Chip8;
 
@@ -55,13 +61,18 @@ static const unsigned char font[0x50] =
 };
 
 
-uint16_t read_opcode(Chip8 *chip);
-void exec_opcode(Chip8 *chip, int opcode);
 void fileopen(char *filename, Chip8 *chip);
+
+void exec_opcode(Chip8 *chip, int opcode);
 void unknown_opcode(int opcode);
+uint16_t read_opcode(Chip8 *chip);
+
 void execute_cpu_cycle(Chip8 *chip);
-void event_loop(SDL_Event *event, bool *running);
+void event_loop(Chip8 *chip, SDL_Event *event, bool *running);
 void render_draw(SDL_Renderer *renderer);
+void set_grid(Chip8 *chip, uint8_t x, uint8_t y, uint8_t n);
+
+uint8_t keymap(SDL_Keycode key);
 extern bool keys[];
 
 #endif // !i
