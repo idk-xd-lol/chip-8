@@ -23,14 +23,24 @@ int main(int argc, char **argv)
   srand(time(NULL));
 
   //screen 
+  Uint16 last_cpu = SDL_GetTicks();
   Uint16 last_timer = SDL_GetTicks();
-
+  
   while(running)
   {
     event_loop(&chip, &event, &running);
-    execute_cpu_cycle(&chip);
-    render_draw(renderer);
     Uint16 now = SDL_GetTicks();
+    if (now - last_cpu >=2)
+    {
+      execute_cpu_cycle(&chip);
+      last_cpu = now;
+    }
+    if(chip.draw_flag)
+    {
+      render_draw(&chip, renderer);
+      chip.draw_flag = false;
+    }
+
     if(now - last_timer >= 1000 / 60)
     {
       if(chip.delay_timer > 0)
@@ -40,6 +50,7 @@ int main(int argc, char **argv)
 
       last_timer = now;
     }
+    SDL_Delay(1);
   }
 
   SDL_DestroyRenderer(renderer);

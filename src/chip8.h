@@ -18,6 +18,8 @@
 #include <SDL3/SDL_timer.h>
 #include <SDL3/SDL_events.h>
 #include <SDL3/SDL_rect.h>
+#include <SDL3/SDL_render.h>
+#include <math.h>
 
 typedef struct {
   uint8_t memory[0x1000];
@@ -33,7 +35,8 @@ typedef struct {
   uint8_t delay_timer;
   uint8_t sound_timer;
 
-  bool display[32][64];
+  uint8_t display[32][64];
+  bool draw_flag;
 
   bool waiting_for_key;
   uint8_t waiting_register;
@@ -54,7 +57,7 @@ static const unsigned char font[0x50] =
   0xF0, 0x90, 0xF0, 0x10, 0xF0, // 9
   0xF0, 0x90, 0xF0, 0x90, 0x90, // A
   0xE0, 0x90, 0xE0, 0x90, 0xE0, // B
-  0xF0, 0x80, 0x80, 0x80, 0xF0, // C
+  0xF0, 0x80, 0x80, 0x80, 0xF0, // C1
   0xE0, 0x90, 0x90, 0x90, 0xE0, // D
   0xF0, 0x80, 0xF0, 0x80, 0xF0, // E
   0xF0, 0x80, 0xF0, 0x80, 0x80  // F
@@ -63,14 +66,17 @@ static const unsigned char font[0x50] =
 
 void fileopen(char *filename, Chip8 *chip);
 
+uint16_t read_opcode(Chip8 *chip);
 void exec_opcode(Chip8 *chip, int opcode);
 void unknown_opcode(int opcode);
-uint16_t read_opcode(Chip8 *chip);
+
+void add_sprite(Chip8 *chip, uint8_t x, uint8_t y, uint8_t n);
+void clear_display(Chip8 *chip);
 
 void execute_cpu_cycle(Chip8 *chip);
 void event_loop(Chip8 *chip, SDL_Event *event, bool *running);
-void render_draw(SDL_Renderer *renderer);
-void set_grid(Chip8 *chip, uint8_t x, uint8_t y, uint8_t n);
+void render_draw(Chip8 *chip, SDL_Renderer *renderer);
+
 
 uint8_t keymap(SDL_Keycode key);
 extern bool keys[];

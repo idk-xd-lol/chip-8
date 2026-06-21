@@ -1,8 +1,5 @@
 #include "chip8.h"
-#include <SDL3/SDL_events.h>
-#include <SDL3/SDL_render.h>
-#include <stdint.h>
-#include <stdlib.h>
+
 
 bool keys[16] = {0};
 
@@ -15,6 +12,7 @@ void exec_opcode(Chip8* chip, int opcode)
 {
   uint8_t x = (opcode >> 8) & 0x000F;
   uint8_t y = (opcode >> 4) & 0x000F;
+  uint8_t value;
   uint8_t n = opcode & 0x000F; 
   uint8_t nn = opcode & 0x00FF;
   uint16_t nnn = opcode & 0x0FFF;
@@ -25,7 +23,8 @@ void exec_opcode(Chip8* chip, int opcode)
       switch(nn)
       {
         case 0xE0:
-          //clears screen
+          chip->draw_flag = true;
+          clear_display(chip);
           break;
         case 0xEE:
           chip->pc = chip->stack[--chip->sp];
@@ -101,6 +100,7 @@ void exec_opcode(Chip8* chip, int opcode)
           break;
       }
       break;
+
     case 0x9000:
       if(chip->V[x] != chip->V[y])
         chip->pc +=2;
@@ -112,20 +112,22 @@ void exec_opcode(Chip8* chip, int opcode)
       chip->pc = chip->V[0x0] + nnn;
       break;
     case 0xC000:
-      chip->V[x] = nnn & (rand() % 0xFF);
+      chip->V[x] = (rand() & 0xFF) & nn;
       break;
     case 0xD000:
-      set_grid(chip, x, y, n);
+      chip->draw_flag = true;
+      chip->V[0xF] = 0;
+      add_sprite(chip, x, y, n);
       break;
     case 0xE000:
       switch (nn)
       {
         case 0x9E:
-          if(keys[x])
+          if(keys[chip->V[x]])
             chip->pc += 2;
           break;
         case 0xA1:
-          if(!keys[x])
+          if(!keys[chip->V[x]])
             chip->pc+=2;
           break;
         default:
@@ -154,15 +156,25 @@ void exec_opcode(Chip8* chip, int opcode)
           break;
         case 0x29:
           //sets I to the location of the sprite for the character in VX
+          chip->I = 0x50 + (5 * chip->V[x]); 
           break;
         case 0x33:
-          //stores the binary coded decimal represintation of VX
-          break;
+          value = chip->V[x];
+          chip->memory[chip->I] = value / 100;
+          chip->memory[chip->I + 1] = (value / 10)%10;
+          chip->memory[chip->I + 2] = value%10;
+          break; 
         case 0x55:
-          //stores from V0 to VX(including VX) in memory starting at address I. 
+          for(int i = 0; i <= x; i++)
+          {
+            chip->memory[chip->I + i] = chip->V[i];
+          }
           break;
         case 0x65:
-          //fills from V0 to VX with values from memory starting at address I.
+          for(int i = 0; i <= x; i++)
+          {
+            chip->V[i] = chip->memory[chip->I + i];
+          }
           break;
         default:
           unknown_opcode(opcode);
@@ -204,8 +216,11 @@ void fileopen(char *filename, Chip8 *chip)
 void execute_cpu_cycle(Chip8 *chip)
 {
   uint16_t opcode = read_opcode(chip);
+  if (chip->waiting_for_key)
+    return;
   chip->pc += 2;
   exec_opcode(chip, opcode);
+  
 }
 
 void unknown_opcode(int opcode)
@@ -218,7 +233,10 @@ void event_loop(Chip8 * chip, SDL_Event *event, bool *running)
 {
   while (SDL_PollEvent(event)) {
       if(event->type == SDL_EVENT_QUIT)
-        running = false;
+      {
+        *running = false;
+        break;
+      }
       if(event->type == SDL_EVENT_KEY_DOWN)
       {
         uint8_t k = keymap(event->key.key);
@@ -241,12 +259,24 @@ void event_loop(Chip8 * chip, SDL_Event *event, bool *running)
     }
 }
 
-void render_draw(SDL_Renderer *renderer)
+void render_draw(Chip8 *chip, SDL_Renderer *renderer)
 {
-  SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
+  SDL_SetRenderDrawColor(renderer, 16, 12, 13, 255);
   SDL_RenderClear(renderer);
+  SDL_SetRenderDrawColor(renderer, 122, 132, 148, 255);
+  for(int y = 0; y < 32; y++)
+  {
+    for(int x = 0; x < 64; x++)
+    {
+      if(chip->display[y][x])
+      {
+        SDL_FRect rect = {x * 10, y * 10, 10, 10};
+        SDL_RenderFillRect(renderer, &rect);
+      }
+    }
+  }
   SDL_RenderPresent(renderer);
-}
+ }
 
 uint8_t keymap(SDL_Keycode key)
 {
@@ -276,3 +306,35 @@ uint8_t keymap(SDL_Keycode key)
   }
 }
 
+void add_sprite(Chip8 *chip, uint8_t x, uint8_t y, uint8_t n)
+{
+  for (uint8_t row = 0; row < n; row++)
+  {
+    uint8_t sprite = chip->memory[chip->I + row];
+
+    for (uint8_t col = 0; col < 8; col++)
+    {
+      if (sprite & (0x80 >> col))
+      {
+        uint8_t x_pos = (chip->V[x] + col)%64;
+        uint8_t y_pos = (chip->V[y] + row)%32;
+
+        if (chip->display[y_pos][x_pos])
+                chip->V[0xF] = 1;
+
+        chip->display[y_pos][x_pos] ^= 1;
+      }
+    }
+  }
+}
+
+void clear_display(Chip8 *chip)
+{
+  for (int y = 0; y < 32; y++)
+  {
+    for (int x = 0; x < 64; x++)
+    {
+      chip->display[y][x] = 0;
+    }
+  }
+}
