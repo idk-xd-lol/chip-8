@@ -42,18 +42,14 @@ Build:
 
 ```bash
 make
-
-
+```
 ---
 
 # Run
 
-```md
-## Run
-
 ```bash
 ./build/chip8 roms/games/Tetris [Fran Dachille, 1991].ch8
-
+```
 
 ---
 
@@ -69,3 +65,4 @@ This section looks professional.
 - Display: 64x32 monochrome
 - Memory: 4096 bytes
 - Stack: 16 levels
+```
