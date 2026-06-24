@@ -1,8 +1,6 @@
 #ifndef CHIP8_H
 #define CHIP8_H
 
-#include <SDL3/SDL_events.h>
-#include <SDL3/SDL_keycode.h>
 #include <stdint.h>
 #include <stdlib.h>
 #include <stdint.h>
@@ -11,6 +9,8 @@
 #include <unistd.h>
 #include <string.h>
 #include <time.h>
+
+//sdl
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_init.h>
 #include <SDL3/SDL_video.h>
@@ -19,8 +19,10 @@
 #include <SDL3/SDL_events.h>
 #include <SDL3/SDL_rect.h>
 #include <SDL3/SDL_render.h>
-#include <math.h>
+#include <SDL3/SDL_events.h>
+#include <SDL3/SDL_keycode.h>
 
+//chip8 struct
 typedef struct {
   uint8_t memory[0x1000];
   
@@ -43,6 +45,8 @@ typedef struct {
 
 } Chip8;
 
+
+//font
 static const unsigned char font[0x50] = 
 {
   0xF0, 0x90, 0x90, 0x90, 0xF0, // 0
@@ -73,7 +77,7 @@ void unknown_opcode(int opcode);
 void add_sprite(Chip8 *chip, uint8_t x, uint8_t y, uint8_t n);
 void clear_display(Chip8 *chip);
 
-void execute_cpu_cycle(Chip8 *chip);
+void execute_cpu_cycle(Chip8 *chip, SDL_Renderer *renderer);
 void event_loop(Chip8 *chip, SDL_Event *event, bool *running);
 void render_draw(Chip8 *chip, SDL_Renderer *renderer);
 

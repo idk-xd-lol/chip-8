@@ -1,4 +1,5 @@
 #include "chip8.h"
+#include <SDL3/SDL_stdinc.h>
 
 int main(int argc, char **argv)
 {
@@ -9,10 +10,12 @@ int main(int argc, char **argv)
     exit(EXIT_FAILURE);
   }
 
+  //set varibles
   Chip8 chip = {0};
   chip.pc = 0x200;
   bool running = true;
   
+  //initializate sdl and create sdl varibles
   SDL_Init(SDL_INIT_VIDEO);
   SDL_Window *window = SDL_CreateWindow("CHIP-8", 640, 320, 0);
   SDL_Renderer *renderer = SDL_CreateRenderer(window, NULL);
@@ -23,24 +26,20 @@ int main(int argc, char **argv)
   srand(time(NULL));
 
   //screen 
-  Uint16 last_cpu = SDL_GetTicks();
-  Uint16 last_timer = SDL_GetTicks();
+  Uint64 last_cpu = SDL_GetTicks();
+  Uint64 last_timer = SDL_GetTicks();
   
+  //main loop
   while(running)
   {
     event_loop(&chip, &event, &running);
-    Uint16 now = SDL_GetTicks();
+    Uint64 now = SDL_GetTicks();
     if (now - last_cpu >=2)
     {
-      execute_cpu_cycle(&chip);
+      execute_cpu_cycle(&chip, renderer);
       last_cpu = now;
     }
-    if(chip.draw_flag)
-    {
-      render_draw(&chip, renderer);
-      chip.draw_flag = false;
-    }
-
+    
     if(now - last_timer >= 1000 / 60)
     {
       if(chip.delay_timer > 0)
@@ -50,9 +49,9 @@ int main(int argc, char **argv)
 
       last_timer = now;
     }
-    SDL_Delay(1);
   }
 
+  //closing all
   SDL_DestroyRenderer(renderer);
   SDL_DestroyWindow(window);
   SDL_Quit();
